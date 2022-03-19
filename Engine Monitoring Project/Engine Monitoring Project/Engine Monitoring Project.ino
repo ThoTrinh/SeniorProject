@@ -3,7 +3,8 @@ Name:           Engine-Monitoring-Project
 Created:        12/09/2021
 Authors:        Tho Trinh, Robert, Pete, Nhi, Triston
 
-Description:    This measures the torque using strain gauge readings on the dynometer. It should be self calibrating
+Description:    This measures the torque using strain gauge readings on the dynometer. It is self calibrating, allowing it to
+                run in any environment regardless of humidity, temperature, etc.
 **********************/
 
 // Including Necessary Libraries
@@ -32,7 +33,7 @@ unsigned long t = 0;
 void setup() {
   // Debugging output
   Serial.begin(9600);
-  // set up the LCD's number of columns and rows: 
+  // set up the LCD's number of columns and rows:
   lcd.begin(16, 2);
   //refresh the display
   lcd.clear();
@@ -65,7 +66,7 @@ void setup() {
   // print out "Calibrating" on to LCD
   lcd.setCursor(0,1);
   lcd.print("Calibrating...");
-  
+
   // get smoothed value from the dataset:
   for(int i = 0; i < 100; ++i)
   {
@@ -79,7 +80,7 @@ void setup() {
     if (readyForCalibration) {
       initial_torque += LoadCell.getData();
     }
-    
+
     readyForCalibration = 0;
   }
 
@@ -96,9 +97,9 @@ void setup() {
 }
 
 void loop() {
-  
+
   static boolean newDataReady = 0;
-  const int serialPrintInterval = 0; // increase value to slow down print activity 
+  const int serialPrintInterval = 0; // increase value to slow down print activity
 
   // check for new data/start next conversion:
   if (LoadCell.update()) {
@@ -110,31 +111,31 @@ void loop() {
     if (millis() > t + serialPrintInterval) {
       // get value from strain gauges
       float strain_gauge_value = LoadCell.getData();
-      
+
       // remove last three digits from strain gauge reading to remove electrical noise
       int rounded_strain_gauge_value = rounded_strain_gauge_value/1000;
-      
+
       int torque = rounded_strain_gauge_value - initial_torque; // initial_torque was the calibration value when engine was off.
                                                                 // all torque outputs will be based off of the initial value when engine's off
                                                                 // torque is the calibrated strain gauge value
-                                                                
+
       // this accounts for some of the movement in strain gauge reading when engine is off
       if (torque < 6){
         torque = 0;
       }
-      
+
       int real_torque = 0; // real_torque is the torque that we will output to the lcd screen
       if (torque < -10){ // if strain gauge reading is this low, we have to recalibrate system
-        
+
         lcd.setCursor(0,0);
         lcd.print("RECALIBRATE");
         lcd.setCursor(0,1);
         lcd.print("  SYSTEM");
-        
+
       } else {  // if strain gauge reading is okay, we calculate torque from strain gauge reading
-        
-        if (torque <= 21) { // if strain gauge reading is low, we use this equation 
-          real_torque = .8 * exp(.25 * torque); 
+
+        if (torque <= 21) { // if strain gauge reading is low, we use this equation
+          real_torque = .8 * exp(.25 * torque);
         } else { // if strain gauge reading is high, we use this equation
           real_torque = ( .9 * exp( .153 * torque) ) - ( .3 * exp( .09 * torque));
         }
@@ -143,9 +144,9 @@ void loop() {
         lcd.setCursor(0,1);
         lcd.print(real_torque);
       }
-      
+
       newDataReady = 0; // reset newDataReady
       t = millis(); // update t
     }
-  }  
+  }
 }
